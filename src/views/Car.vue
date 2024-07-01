@@ -14,6 +14,7 @@ import Hammer from "hammerjs";
 const ContainerRef = ref(null);
 
 let ground = null;
+const nameToMeshDic = {};
 
 const scene = new THREE.Scene();
 // 创建相机
@@ -56,6 +57,8 @@ gltfLoader.load("car.glb", (gltf) => {
   const model = gltf.scene;
   scene.add(model);
   model.traverse((child) => {
+    nameToMeshDic[child.name] = child;
+
     if (child.type === "Mesh") {
       child.material.envMap = cubeRenderTarget.texture;
       child.visible = true;
@@ -66,15 +69,7 @@ gltfLoader.load("car.glb", (gltf) => {
 
       ground = child;
     }
-    if (child.name === "flyLight") {
-      child.material.map.anisotropy = 8;
-      gsap.to(child.material.map.offset, {
-        x: 1,
-        repeat: -1,
-        ease: "none",
-        duration: 0.5,
-      });
-    }
+
     if (child.name === "mainCar") {
       child.traverse((item) => {
         if (item.type === "Mesh") {
@@ -82,23 +77,13 @@ gltfLoader.load("car.glb", (gltf) => {
         }
       });
     }
-    if (["wheelFront", "wheelBack"].includes(child.name)) {
-      gsap.to(child.rotation, {
-        y: Math.PI * 2,
-        repeat: -1,
-        ease: "none",
-        duration: 0.3,
-      });
-    }
-    if (["groundDetail"].includes(child.name)) {
-      gsap.to(child.material.map.offset, {
-        x: 10,
-        repeat: -1,
-        ease: "none",
-        duration: 10,
-      });
+
+    if (child.name === "flyLight") {
+      child.material.map.anisotropy = 8;
+      child.material.map.opacity = 0;
     }
   });
+  console.log('nameToMeshDic', nameToMeshDic)
 });
 
 const rgbeLoader = new RGBELoader();
@@ -134,8 +119,43 @@ onMounted(() => {
   const hammer = new Hammer(ContainerRef.value);
 
   window.addEventListener("mousedown", (e) => {
-    console.log("e", e);
     if (e.button === 0) {
+      const flyLight = nameToMeshDic.flyLight;
+      const wheelFront = nameToMeshDic.wheelFront;
+      const wheelBack = nameToMeshDic.wheelBack;
+      const groundDetail = nameToMeshDic.groundDetail;
+
+      flyLight.userData['flyLightTween'] = gsap.to(flyLight.material.map.offset, {
+        x: flyLight.material.map.offset.x + 1,
+        repeat: -1,
+        ease: "none",
+        duration: 0.5,
+      });
+      flyLight.userData['flyLightOpacityTween'] = gsap.to(flyLight.material, {
+        opacity: 1,
+        repeat: 0,
+        ease: "none",
+        duration: 0.5,
+      });
+
+      wheelFront.userData['tween'] = gsap.to(wheelFront.rotation, {
+        y: wheelFront.rotation.y + Math.PI * 2,
+        repeat: -1,
+        ease: "none",
+        duration: 0.3,
+      });
+      wheelBack.userData['tween'] = gsap.to(wheelBack.rotation, {
+        y: wheelFront.rotation.y + Math.PI * 2,
+        repeat: -1,
+        ease: "none",
+        duration: 0.3,
+      });
+      groundDetail.userData['tween'] = gsap.to(groundDetail.material.map.offset, {
+        x: groundDetail.material.map.offset.x + 10,
+        repeat: -1,
+        ease: "none",
+        duration: 10,
+      });
       gsap.to(camera, {
         fov: 80,
         duration: 0.5,
@@ -149,17 +169,29 @@ onMounted(() => {
   });
 
   window.addEventListener("mouseup", (e) => {
-    console.log("e", e);
     if (e.button === 0) {
-      gsap.to(camera, {
-        fov: 60,
-        duration: 0.5,
+      const flyLight = nameToMeshDic.flyLight;
+      const wheelFront = nameToMeshDic.wheelFront;
+      const wheelBack = nameToMeshDic.wheelBack;
+      const groundDetail = nameToMeshDic.groundDetail;
+
+
+      flyLight.userData['flyLightTween'].kill();
+      flyLight.userData['flyLightOpacityTween'] = gsap.to(flyLight.material, {
+        opacity: 0,
         repeat: 0,
-        ease: "power1.inOut",
-        onUpdate() {
-          camera.updateProjectionMatrix();
-        },
+        ease: "none",
+        duration: 0.5,
+        onComplete(a) {
+          console.log('a', a);
+          flyLight.userData['flyLightOpacityTween'].kill();
+        }
       });
+
+      wheelFront.userData['tween'].kill();
+      wheelBack.userData['tween'].kill();
+      groundDetail.userData['tween'].kill();
+
     }
   });
 });
