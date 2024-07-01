@@ -138,9 +138,9 @@ onMounted(() => {
     if (e.button === 0) {
       gsap.to(camera, {
         fov: 80,
-        duration: 0.5,
+        duration: 1,
         repeat: 0,
-        ease: "power1.inOut",
+        ease: "none",
         onUpdate() {
           camera.updateProjectionMatrix();
         },
@@ -152,10 +152,10 @@ onMounted(() => {
     console.log("e", e);
     if (e.button === 0) {
       gsap.to(camera, {
-        fov: 60,
-        duration: 0.5,
+        fov: 45,
+        duration: 1,
         repeat: 0,
-        ease: "power1.inOut",
+        ease: "none",
         onUpdate() {
           camera.updateProjectionMatrix();
         },

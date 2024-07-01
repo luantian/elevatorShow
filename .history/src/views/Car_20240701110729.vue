@@ -8,8 +8,6 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader, RGBELoader } from "three/examples/jsm/Addons";
-import gsap from "gsap";
-import Hammer from "hammerjs";
 
 const ContainerRef = ref(null);
 
@@ -21,7 +19,7 @@ const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  600
+  500
 );
 camera.position.z = 5;
 
@@ -67,36 +65,7 @@ gltfLoader.load("car.glb", (gltf) => {
       ground = child;
     }
     if (child.name === "flyLight") {
-      child.material.map.anisotropy = 8;
-      gsap.to(child.material.map.offset, {
-        x: 1,
-        repeat: -1,
-        ease: "none",
-        duration: 0.5,
-      });
-    }
-    if (child.name === "mainCar") {
-      child.traverse((item) => {
-        if (item.type === "Mesh") {
-          item.material.envMapIntensity = 5; // 光源被盖住，可以调亮物体
-        }
-      });
-    }
-    if (["wheelFront", "wheelBack"].includes(child.name)) {
-      gsap.to(child.rotation, {
-        y: Math.PI * 2,
-        repeat: -1,
-        ease: "none",
-        duration: 0.3,
-      });
-    }
-    if (["groundDetail"].includes(child.name)) {
-      gsap.to(child.material.map.offset, {
-        x: 10,
-        repeat: -1,
-        ease: "none",
-        duration: 10,
-      });
+      // child.material.map.anisotropy = 8;
     }
   });
 });
@@ -130,38 +99,6 @@ function animationLoop() {
 
 onMounted(() => {
   ContainerRef.value.appendChild(renderer.domElement);
-
-  const hammer = new Hammer(ContainerRef.value);
-
-  window.addEventListener("mousedown", (e) => {
-    console.log("e", e);
-    if (e.button === 0) {
-      gsap.to(camera, {
-        fov: 80,
-        duration: 0.5,
-        repeat: 0,
-        ease: "power1.inOut",
-        onUpdate() {
-          camera.updateProjectionMatrix();
-        },
-      });
-    }
-  });
-
-  window.addEventListener("mouseup", (e) => {
-    console.log("e", e);
-    if (e.button === 0) {
-      gsap.to(camera, {
-        fov: 60,
-        duration: 0.5,
-        repeat: 0,
-        ease: "power1.inOut",
-        onUpdate() {
-          camera.updateProjectionMatrix();
-        },
-      });
-    }
-  });
 });
 </script>
 
